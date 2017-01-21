@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package protobuf;
+
+enum Attribute {
+  UNASPECTED = 0;
+  FIRE = 1;
+  LIFE = 2;
+  DEATH = 3;
+  DOUBLE = 4;
+  TRIPLE = 5;
+  OVER_TIME_2 = 6;
+  OVER_TIME_3 = 7;
+  OVER_TIME_4 = 8;
+  OVER_TIME_5 = 9;
+  MAGIC = 11;
+}

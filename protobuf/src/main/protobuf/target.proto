@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package protobuf;
+
+enum Target {
+  SELF = 0;
+  ALL = 1;
+  ENEMY_AT_RANDOM = 2;
+  FRIEND_AT_RANDOM = 3;
+}

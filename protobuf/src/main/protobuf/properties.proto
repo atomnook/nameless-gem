@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package protobuf;
+
+import "attribute.proto";
+import "target.proto";
+import "trigger.proto";
+
+message Properties {
+  Trigger trigger = 1;
+  Target target = 2;
+  repeated Attribute attributes = 3;
+}

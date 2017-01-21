@@ -18,8 +18,7 @@
 | --- |
 | Friend X |
 | Enemy X |
-| Friend All |
-| Enemy All |
+| All |
 
 | How |
 | --- |
