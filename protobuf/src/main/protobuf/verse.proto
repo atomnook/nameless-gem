@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package protobuf;
+
+import "name.proto";
+
+message Verse {
+  repeated Name names = 1;
+}

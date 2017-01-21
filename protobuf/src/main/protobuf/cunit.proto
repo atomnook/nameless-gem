@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package protobuf;
+
+import "verse.proto";
+
+message Cunit {
+  repeated Verse actions = 1;
+}

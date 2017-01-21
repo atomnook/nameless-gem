@@ -1,4 +1,5 @@
 .idea/
+arena/target/
 project/target/
 protobuf/target/
 target/
