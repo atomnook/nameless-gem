@@ -1,11 +1,12 @@
 package arena.ops
 
 import protobuf.Target.{ALL, ENEMY_AT_RANDOM, FRIEND_AT_RANDOM, SELF, TARGET_NA, Unrecognized}
-import protobuf.{CunitData, Target, Verse}
+import protobuf.{CunitData, NameContext, Target, Verse}
 
 import scala.util.Random
 
-case class VerseTargets(verse: Verse, friends: Seq[CunitData], enemies: Seq[CunitData], self: CunitData) {
+case class VerseTargets(verse: Verse, friends: Seq[CunitData], enemies: Seq[CunitData], self: CunitData)
+                       (implicit context: NameContext) {
   private[this] def pickOne[A](l: Seq[A]): Seq[A] = {
     if (l.isEmpty) {
       Nil

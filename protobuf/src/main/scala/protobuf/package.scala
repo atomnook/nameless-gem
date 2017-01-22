@@ -1,18 +1,11 @@
-import protobuf.Name.{NAMELESS, Unrecognized}
 import protobuf.Target.TARGET_NA
 import protobuf.Trigger.TRIGGER_NA
 
 package object protobuf {
-  private[this] val nameless = Properties()
+  case class NameContext(map: Map[Name, Properties])
 
-  implicit class NameProperties(name: Name) {
-    def properties: Properties = {
-      name match {
-        case NAMELESS => nameless
-
-        case Unrecognized(_) => Properties()
-      }
-    }
+  implicit class NameProperties(name: Name)(implicit context: NameContext) {
+    def properties: Properties = context.map.getOrElse(name, Properties())
   }
 
   implicit class PropertiesOps(props: Properties) {
@@ -26,7 +19,7 @@ package object protobuf {
     def triggerOption: Option[Trigger] = option(_.trigger, TRIGGER_NA)
   }
 
-  implicit class VerseProperties(verse: Verse) {
+  implicit class VerseProperties(verse: Verse)(implicit context: NameContext) {
     private[this] def prop[A](f: Properties => A, default: A): A = {
       verse.names.reverse.map(_.properties).map(f).filterNot(_ == default).headOption.getOrElse(default)
     }

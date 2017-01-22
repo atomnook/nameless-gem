@@ -5,9 +5,11 @@ import arena.actor.CunitActor._
 import arena.ops.{CunitAttributes, VerseTargets}
 import protobuf.CunitData.CunitState
 import protobuf.CunitData.CunitState.{ALIVE, DEAD}
-import protobuf.{Cunit, CunitData, Verse}
+import protobuf.{Cunit, CunitData, NameContext, Verse}
 
 class CunitActor(cunit: Cunit) extends FSM[CunitState, CunitData] {
+  implicit val protobufContext = NameContext(Map.empty)
+
   private[this] def init: CunitData = {
     val initial = CunitAttributes(cunit)
     CunitData().update(_.state := ALIVE, _.cunit := cunit, _.max := initial.attributes, _.current := initial.attributes)
