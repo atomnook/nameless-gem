@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package protobuf;
+
+import "cunit.proto";
+
+message ArenaData {
+  enum ArenaState {
+    SETUP = 0;
+    GAME_OVER = 1;
+  }
+
+  repeated Cunit friends = 1;
+  repeated Cunit enemies = 2;
+}

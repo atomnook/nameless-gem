@@ -1,14 +1,13 @@
 package arena.actor
 
-import akka.actor.FSM
+import akka.actor.{FSM, Props}
 import arena.actor.CunitActor._
 import arena.ops.{CunitAttributes, VerseTargets}
 import protobuf.CunitData.CunitState
 import protobuf.CunitData.CunitState.{ALIVE, DEAD}
 import protobuf.{Cunit, CunitData, NameContext, Verse}
 
-class CunitActor(cunit: Cunit) extends FSM[CunitState, CunitData] {
-  implicit val protobufContext = NameContext(Map.empty)
+class CunitActor(cunit: Cunit)(implicit protobufContext: NameContext) extends FSM[CunitState, CunitData] {
 
   private[this] def init: CunitData = {
     val initial = CunitAttributes(cunit)
@@ -44,4 +43,6 @@ object CunitActor {
   case class ActionReply(verse: Option[Verse]) extends ActionReplying
 
   case object Rip extends ActionReplying
+
+  def props(cunit: Cunit, context: NameContext): Props = Props(new CunitActor(cunit)(context))
 }
