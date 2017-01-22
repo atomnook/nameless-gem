@@ -3,6 +3,7 @@ syntax = "proto3";
 package protobuf;
 
 enum Trigger {
-  FIRST = 0;
-  LAST = 1;
+  TRIGGER_NA = 0;
+  FIRST = 1;
+  LAST = 2;
 }

@@ -12,4 +12,13 @@ package object protobuf {
       }
     }
   }
+
+  implicit class VerseProperties(verse: Verse) {
+    def properties: Properties = {
+      Properties().update(
+        _.target := ???,
+        _.trigger := ???,
+        _.attributes := verse.names.flatMap(_.properties.attributes))
+    }
+  }
 }

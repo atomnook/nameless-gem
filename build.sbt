@@ -9,7 +9,12 @@ val protobufSettings = Seq(
     PB.gens.java -> (sourceManaged in Compile).value,
     scalapb.gen(javaConversions = true, grpc = false, flatPackage = true) -> (sourceManaged in Compile).value))
 
-val arenaSettings = Seq(libraryDependencies ++= Seq("com.typesafe.akka" %% "akka-actor" % "2.4.16"))
+val akkaVersion = "2.4.16"
+
+val arenaSettings = Seq(
+  libraryDependencies ++= Seq(
+    "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+    "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test"))
 
 lazy val protobuf = (project in file("protobuf")).settings(defaultSettings, protobufSettings)
 

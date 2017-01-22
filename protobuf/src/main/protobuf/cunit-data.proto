@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package protobuf;
+
+import "attributes.proto";
+import "cunit.proto";
+
+message CunitData {
+  enum CunitState {
+    ALIVE = 0;
+    DEAD = 1;
+  }
+
+  CunitState state = 1;
+  Attributes max = 2;
+  Attributes current = 3;
+  Cunit cunit = 4;
+}
