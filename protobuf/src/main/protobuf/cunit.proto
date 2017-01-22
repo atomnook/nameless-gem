@@ -5,5 +5,6 @@ package protobuf;
 import "verse.proto";
 
 message Cunit {
-  repeated Verse actions = 1;
+  string id = 1;
+  repeated Verse actions = 2;
 }

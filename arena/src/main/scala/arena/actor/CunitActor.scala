@@ -2,33 +2,20 @@ package arena.actor
 
 import akka.actor.FSM
 import arena.actor.CunitActor._
+import arena.ops.VerseTargets
 import protobuf.CunitData.CunitState
 import protobuf.CunitData.CunitState.{ALIVE, DEAD}
-import protobuf.Target.{ALL, ENEMY_AT_RANDOM, FRIEND_AT_RANDOM, SELF, TARGET_NA, Unrecognized}
-import protobuf.TargetOuterClass.Target
 import protobuf.{Cunit, CunitData, Verse}
 
 class CunitActor(cuint: Cunit) extends FSM[CunitState, CunitData] {
   private[this] def init: CunitData = CunitData().update(_.state := ALIVE, _.cunit := cuint)
 
-  private[this] def meet(arg: Action, v: Verse): Option[Verse] = {
-    v.names.map(_.properties.target).reverse.filterNot(_ == Target.TARGET_NA).headOption match {
-      case None => None
-      case Some(target) =>
-        target match {
-          case TARGET_NA => None
-          case SELF => Some(v)
-          case ALL => Some(v)
-          case ENEMY_AT_RANDOM => Some(v)
-          case FRIEND_AT_RANDOM => Some(v)
-          case Unrecognized(value) => None
-        }
-    }
-  }
-
-  private[this] def action(arg: Action, data: CunitData): Option[Verse] = {
-    data.getCunit.actions.foldLeft(Option.empty[Verse]) { case (res, a) =>
-      res.orElse(meet(arg, a))
+  private[this] def action(arg: Action, self: CunitData): Option[Verse] = {
+    self.getCunit.actions.foldLeft(Option.empty[Verse]) { case (res, a) =>
+      res.orElse {
+        val vt = VerseTargets(verse = a, friends = arg.friends, enemies = arg.enemies, self = self)
+        if (vt.targets.isEmpty) None else Some(vt.verse)
+      }
     }
   }
 
@@ -48,7 +35,8 @@ class CunitActor(cuint: Cunit) extends FSM[CunitState, CunitData] {
 object CunitActor {
   case class Action(friends: Seq[CunitData], enemies: Seq[CunitData])
 
-  case class ActionReply(verse: Option[Verse])
+  sealed trait ActionReplying
+  case class ActionReply(verse: Option[Verse]) extends ActionReplying
 
-  case object Rip
+  case object Rip extends ActionReplying
 }
