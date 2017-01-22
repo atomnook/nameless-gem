@@ -2,13 +2,16 @@ package arena.actor
 
 import akka.actor.FSM
 import arena.actor.CunitActor._
-import arena.ops.VerseTargets
+import arena.ops.{CunitAttributes, VerseTargets}
 import protobuf.CunitData.CunitState
 import protobuf.CunitData.CunitState.{ALIVE, DEAD}
 import protobuf.{Cunit, CunitData, Verse}
 
-class CunitActor(cuint: Cunit) extends FSM[CunitState, CunitData] {
-  private[this] def init: CunitData = CunitData().update(_.state := ALIVE, _.cunit := cuint)
+class CunitActor(cunit: Cunit) extends FSM[CunitState, CunitData] {
+  private[this] def init: CunitData = {
+    val initial = CunitAttributes(cunit)
+    CunitData().update(_.state := ALIVE, _.cunit := cunit, _.max := initial.attributes, _.current := initial.attributes)
+  }
 
   private[this] def action(arg: Action, self: CunitData): Option[Verse] = {
     self.getCunit.actions.foldLeft(Option.empty[Verse]) { case (res, a) =>

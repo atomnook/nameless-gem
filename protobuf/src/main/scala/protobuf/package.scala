@@ -38,4 +38,24 @@ package object protobuf {
         _.attributes := verse.names.flatMap(_.properties.attributes))
     }
   }
+
+  implicit class AttributesOps(lhs: Attributes) {
+    private[this] def ops(rhs: Attributes, op: (Long, Long) => Long): Attributes = {
+      def tuple(f: Attributes => Long): (Long, Long) = (f(lhs), f(rhs))
+
+      val o = op.tupled
+
+      Attributes(
+        hp = o(tuple(_.hp)),
+        mp = o(tuple(_.mp)),
+        str = o(tuple(_.str)),
+        vit = o(tuple(_.vit)),
+        dex = o(tuple(_.dex)),
+        agi = o(tuple(_.agi)),
+        int = o(tuple(_.int)),
+        mnd = o(tuple(_.mnd)))
+    }
+
+    def add(rhs: Attributes): Attributes = ops(rhs, _ + _)
+  }
 }
