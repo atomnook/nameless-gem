@@ -6,7 +6,14 @@ import "cunit.proto";
 
 message ArenaData {
   enum ArenaState {
-    SETUP = 0;
+    GAME_START = 0;
+
+    SETUP = 3;
+
+    ACTIVE = 4;
+
+    CLEANUP = 2;
+
     GAME_OVER = 1;
   }
 

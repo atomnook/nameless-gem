@@ -3,7 +3,7 @@ package arena.actor
 import akka.actor.{ActorRef, FSM, Props}
 import arena.actor.ArenaActor.ArenaDataAll
 import protobuf.ArenaData.ArenaState
-import protobuf.ArenaData.ArenaState.{GAME_OVER, SETUP}
+import protobuf.ArenaData.ArenaState.{ACTIVE, CLEANUP, GAME_OVER, GAME_START, SETUP}
 import protobuf.{ArenaData, Cunit, NameContext}
 
 class ArenaActor(data: ArenaData, nameContext: NameContext) extends FSM[ArenaState, ArenaDataAll] {
@@ -15,9 +15,15 @@ class ArenaActor(data: ArenaData, nameContext: NameContext) extends FSM[ArenaSta
         map(c => c -> context.actorOf(CunitActor.props(c, nameContext), c.id)).toMap)
   }
 
-  startWith(SETUP, init)
+  startWith(GAME_START, init)
+
+  when(GAME_START)(???)
 
   when(SETUP)(???)
+
+  when(ACTIVE)(???)
+
+  when(CLEANUP)(???)
 
   when(GAME_OVER)(???)
 }
