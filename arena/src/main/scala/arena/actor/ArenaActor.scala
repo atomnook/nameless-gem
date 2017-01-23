@@ -2,7 +2,7 @@ package arena.actor
 
 import akka.actor.{ActorRef, FSM, Props}
 import arena.actor.ArenaActor.{ArenaDataAll, Settings, Start, Started}
-import arena.actor.CunitActor.Action
+import arena.actor.CunitActor.{Action, ActionReply, ActionReplying, Rip}
 import arena.ops.CunitAttributes
 import protobuf.ArenaData.ArenaState
 import protobuf.ArenaData.ArenaState.{ACTIVE, CLEANUP, GAME_CANCELED, GAME_OVER, GAME_START, SETUP}
@@ -11,7 +11,7 @@ import protobuf.{ArenaData, Cunit, CunitData, CunitId, NameContext, Verse}
 
 import scala.concurrent.duration._
 
-class ArenaActor(settings: Settings, arenaData: ArenaData, nameContext: NameContext)
+class ArenaActor(settings: Settings, arenaData: ArenaData)(implicit nameContext: NameContext)
   extends FSM[ArenaState, ArenaDataAll] {
 
   private[this] def cunitData(cunit: Cunit): CunitData = {
@@ -28,7 +28,7 @@ class ArenaActor(settings: Settings, arenaData: ArenaData, nameContext: NameCont
       actions = Map.empty)
   }
 
-  private[this] def find(id: CunitId, data: ArenaDataAll): CunitData = ???
+  private[this] def find(id: CunitId, data: ArenaDataAll): CunitData = data.all.find(_.getId == id).get
 
   startWith(GAME_START, init)
 
@@ -45,6 +45,18 @@ class ArenaActor(settings: Settings, arenaData: ArenaData, nameContext: NameCont
   when(SETUP, stateTimeout = settings.timeout) {
     case Event(StateTimeout, data) =>
       goto(GAME_CANCELED) using data
+
+    case Event(replying: ActionReplying, data) =>
+      val updated = replying match {
+        case ActionReply(id, verse) => data.actions.updated(id, verse)
+        case Rip(id) => data.actions.updated(id, None)
+      }
+      val copied = data.copy(actions = updated)
+      if (data.all.map(_.getId).forall(updated.contains)) {
+        goto(ACTIVE) using copied
+      } else {
+        stay using copied
+      }
   }
 
   when(ACTIVE, stateTimeout = settings.timeout) {
@@ -76,10 +88,12 @@ class ArenaActor(settings: Settings, arenaData: ArenaData, nameContext: NameCont
 object ArenaActor {
   case class Settings(timeout: FiniteDuration)
 
-  case class ArenaDataAll(left: Seq[CunitData], right: Seq[CunitData], cunits: Map[CunitId, ActorRef], actions: Map[CunitId, Option[Verse]])
+  case class ArenaDataAll(left: Seq[CunitData], right: Seq[CunitData], cunits: Map[CunitId, ActorRef], actions: Map[CunitId, Option[Verse]]) {
+    def all: Seq[CunitData] = left ++ right
+  }
 
   case object Start
   case object Started
 
-  def props(settings: Settings, data: ArenaData, nameContext: NameContext): Props = Props(new ArenaActor(settings, data, nameContext))
+  def props(settings: Settings, data: ArenaData, nameContext: NameContext): Props = Props(new ArenaActor(settings, data)(nameContext))
 }

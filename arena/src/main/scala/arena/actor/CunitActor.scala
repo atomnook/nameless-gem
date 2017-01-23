@@ -7,7 +7,7 @@ import protobuf.CunitData.CunitState
 import protobuf.CunitData.CunitState.{ALIVE, DEAD}
 import protobuf.{CunitData, CunitId, NameContext, Verse}
 
-class CunitActor(implicit val nameContext: NameContext) extends FSM[CunitState, Unit] {
+class CunitActor()(implicit nameContext: NameContext) extends FSM[CunitState, Unit] {
   private[this] def action(arg: Action): Option[Verse] = {
     arg.self.getCunit.actions.foldLeft(Option.empty[Verse]) { case (res, a) =>
       res.orElse {
@@ -25,8 +25,8 @@ class CunitActor(implicit val nameContext: NameContext) extends FSM[CunitState, 
   }
 
   when(DEAD) {
-    case Event(_: Action, data) =>
-      stay using data replying Rip
+    case Event(arg: Action, data) =>
+      stay using data replying Rip(self = arg.self.getId)
   }
 }
 
@@ -36,7 +36,7 @@ object CunitActor {
   sealed trait ActionReplying
   case class ActionReply(self: CunitId, verse: Option[Verse]) extends ActionReplying
 
-  case object Rip extends ActionReplying
+  case class Rip(self: CunitId) extends ActionReplying
 
-  def props(context: NameContext): Props = Props(new CunitActor(context))
+  def props(context: NameContext): Props = Props(new CunitActor()(context))
 }
