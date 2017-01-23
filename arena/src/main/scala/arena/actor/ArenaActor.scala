@@ -2,7 +2,7 @@ package arena.actor
 
 import akka.actor.{ActorRef, FSM, Props}
 import arena.actor.ArenaActor._
-import arena.ops.{Action, CunitAttributes}
+import arena.ops.{Action, CunitAttributes, SortedAction}
 import protobuf.ArenaData.ArenaState
 import protobuf.ArenaData.ArenaState.{ACTIVE, CLEANUP, GAME_CANCELED, GAME_OVER, GAME_START, SETUP}
 import protobuf.CunitData.CunitState.ALIVE
@@ -52,7 +52,23 @@ class ArenaActor(settings: Settings, arenaData: ArenaData)(implicit nameContext:
       goto(GAME_CANCELED) using data
 
     case Event(Act, data) =>
-      ???
+      val actions = data.actions.toSeq.map { case (id, verse) =>
+        (get(id, data), verse)
+      }
+      val next = SortedAction(actions).sorted.headOption match {
+        case Some((cur, _)) =>
+          // todo: use verse
+          data.actions.filterNot(_._1 == cur.getId)
+
+        case None =>
+          log.warning("maybe unreachable code")
+          Map.empty[CunitId, Option[Verse]]
+      }
+      if (next.isEmpty) {
+        goto(CLEANUP) using data.copy(actions = next) replying ActDone
+      } else {
+        stay using data.copy(actions = next) replying ActContinue
+      }
   }
 
   when(CLEANUP, stateTimeout = settings.timeout) {
