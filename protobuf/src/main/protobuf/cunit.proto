@@ -4,9 +4,10 @@ package protobuf;
 
 import "verse.proto";
 import "name.proto";
+import "cunit_id.proto";
 
 message Cunit {
-  string id = 1;
+  CunitId id = 1;
   repeated Verse actions = 2;
   repeated Name latent = 3;
 }

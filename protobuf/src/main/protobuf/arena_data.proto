@@ -15,6 +15,8 @@ message ArenaData {
     CLEANUP = 2;
 
     GAME_OVER = 1;
+
+    GAME_CANCELED = 5;
   }
 
   repeated Cunit friends = 1;

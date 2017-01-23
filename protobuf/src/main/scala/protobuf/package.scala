@@ -51,4 +51,8 @@ package object protobuf {
 
     def add(rhs: Attributes): Attributes = ops(rhs, _ + _)
   }
+
+  implicit class CunitDataOps(c: CunitData) {
+    def getId: CunitId = c.getCunit.getId
+  }
 }
