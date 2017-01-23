@@ -1,9 +1,8 @@
 package arena.actor
 
 import akka.actor.{ActorRef, FSM, Props}
-import arena.actor.ArenaActor.{ArenaDataAll, Settings, Start, Started}
-import arena.actor.CunitActor.{Action, ActionReply, ActionReplying, Rip}
-import arena.ops.CunitAttributes
+import arena.actor.ArenaActor._
+import arena.ops.{Action, CunitAttributes}
 import protobuf.ArenaData.ArenaState
 import protobuf.ArenaData.ArenaState.{ACTIVE, CLEANUP, GAME_CANCELED, GAME_OVER, GAME_START, SETUP}
 import protobuf.CunitData.CunitState.ALIVE
@@ -23,12 +22,10 @@ class ArenaActor(settings: Settings, arenaData: ArenaData)(implicit nameContext:
     ArenaDataAll(
       left = arenaData.friends.map(cunitData),
       right = arenaData.enemies.map(cunitData),
-      cunits = (arenaData.friends ++ arenaData.enemies).
-        map(c => c.getId -> context.actorOf(CunitActor.props(nameContext), c.getId.id)).toMap,
       actions = Map.empty)
   }
 
-  private[this] def find(id: CunitId, data: ArenaDataAll): CunitData = data.all.find(_.getId == id).get
+  private[this] def get(id: CunitId, data: ArenaDataAll): CunitData = data.all.find(_.getId == id).get
 
   startWith(GAME_START, init)
 
@@ -37,8 +34,6 @@ class ArenaActor(settings: Settings, arenaData: ArenaData)(implicit nameContext:
       goto(GAME_CANCELED) using data
 
     case Event(Start, data) =>
-      data.left.foreach(c => data.cunits(c.getId) ! Action(self = c, friends = data.left, enemies = data.right))
-      data.right.foreach(c => data.cunits(c.getId) ! Action(self = c, friends = data.right, enemies = data.left))
       goto(SETUP) using data replying Started
   }
 
@@ -46,22 +41,18 @@ class ArenaActor(settings: Settings, arenaData: ArenaData)(implicit nameContext:
     case Event(StateTimeout, data) =>
       goto(GAME_CANCELED) using data
 
-    case Event(replying: ActionReplying, data) =>
-      val updated = replying match {
-        case ActionReply(id, verse) => data.actions.updated(id, verse)
-        case Rip(id) => data.actions.updated(id, None)
-      }
-      val copied = data.copy(actions = updated)
-      if (data.all.map(_.getId).forall(updated.contains)) {
-        goto(ACTIVE) using copied
-      } else {
-        stay using copied
-      }
+    case Event(Setup, data) =>
+      val l = data.left.map(c => c.getId -> Action(friends = data.left, enemies = data.right, self = c).action)
+      val r = data.right.map(c => c.getId -> Action(friends = data.right, enemies = data.left, self = c).action)
+      goto(ACTIVE) using data.copy(actions = (l ++ r).toMap) replying SetupDone
   }
 
   when(ACTIVE, stateTimeout = settings.timeout) {
     case Event(StateTimeout, data) =>
       goto(GAME_CANCELED) using data
+
+    case Event(Act, data) =>
+      ???
   }
 
   when(CLEANUP, stateTimeout = settings.timeout) {
@@ -88,12 +79,19 @@ class ArenaActor(settings: Settings, arenaData: ArenaData)(implicit nameContext:
 object ArenaActor {
   case class Settings(timeout: FiniteDuration)
 
-  case class ArenaDataAll(left: Seq[CunitData], right: Seq[CunitData], cunits: Map[CunitId, ActorRef], actions: Map[CunitId, Option[Verse]]) {
+  case class ArenaDataAll(left: Seq[CunitData], right: Seq[CunitData], actions: Map[CunitId, Option[Verse]]) {
     def all: Seq[CunitData] = left ++ right
   }
 
   case object Start
   case object Started
+
+  case object Setup
+  case object SetupDone
+
+  case object Act
+  case object ActContinue
+  case object ActDone
 
   def props(settings: Settings, data: ArenaData, nameContext: NameContext): Props = Props(new ArenaActor(settings, data)(nameContext))
 }
